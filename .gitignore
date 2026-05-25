@@ -1,0 +1,30 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local vector stores and generated data
+chroma_db/*
+!chroma_db/.gitkeep
+output/**/*.jsonl
+output/**/*.json
+output/**/*.md
+output/**/*
+!output/**/
+!output/**/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
