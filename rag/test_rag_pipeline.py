@@ -6,7 +6,7 @@ sys.path.append(str(Path(__file__).resolve().parent))
 
 from generate_feedback import generate_feedback
 from search_rag import search_documents_balanced
-
+#eefdgidglkrng
 def print_evidence(docs: list[dict]) -> None:
     print("\n검색 근거:")
     if not docs:
