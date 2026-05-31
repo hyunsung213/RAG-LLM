@@ -63,20 +63,43 @@ def chunks(items: list[dict], batch_size: int) -> Iterable[list[dict]]:
 
 def metadata_for_chroma(doc: dict) -> dict:
     metadata = doc.get("metadata") or {}
-    tags = metadata.get("tags", [])
+
+    tags = metadata.get("tags") or metadata.get("culture_tags") or []
     if isinstance(tags, list):
         tags = "|".join(str(tag) for tag in tags)
 
-    # Chroma metadata는 스칼라 타입만 안정적으로 저장되므로 필요한 값만 평탄화한다.
+    word = (
+        doc.get("word")
+        or metadata.get("canonical_word")
+        or metadata.get("display_word")
+        or metadata.get("seed_word")
+        or ""
+    )
+
+    source = (
+        doc.get("source")
+        or metadata.get("source")
+        or ""
+    )
+
+    doc_type = (
+        doc.get("doc_type")
+        or metadata.get("doc_type")
+        or ""
+    )
+
     return {
-        "doc_type": str(doc.get("doc_type", "")),
-        "word": str(doc.get("word", "")),
-        "source": str(metadata.get("source", "")),
+        "doc_type": str(doc_type),
+        "word": str(word),
+        "source": str(source),
         "pos": str(metadata.get("pos", "")),
         "difficulty": str(metadata.get("difficulty", "")),
         "tags": str(tags),
+        "seed_word": str(metadata.get("seed_word", "")),
+        "canonical_word": str(metadata.get("canonical_word", "")),
+        "display_word": str(metadata.get("display_word", "")),
+        "purpose": str(metadata.get("purpose", "")),
     }
-
 
 def create_gemini_client(api_key: str):
     from google import genai
@@ -156,7 +179,17 @@ def build_index(rag_docs_path: Path = RAG_DOCS_PATH, batch_size: int = 50, reset
     chroma_client = chromadb.PersistentClient(path=str(settings["persist_dir"]))
     collection = get_collection(chroma_client, settings["collection_name"], reset=reset)
 
-    docs = [doc for doc in read_jsonl(rag_docs_path) if doc.get("doc_id") and doc.get("content")]
+    docs = []
+    for doc in read_jsonl(rag_docs_path):
+        doc_id = doc.get("doc_id") or doc.get("id")
+        content = doc.get("content") or doc.get("text")
+
+        if not doc_id or not content:
+            continue
+
+        doc["doc_id"] = doc_id
+        doc["content"] = content
+        docs.append(doc)
     total_read = len(docs)
     total_added = 0
     total_skipped = 0

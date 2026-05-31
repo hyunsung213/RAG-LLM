@@ -113,6 +113,7 @@ IEUNG_EMBEDDING_PROVIDER=local
 
 한국어기초사전:
 
+
 ```bash
 python collectors/krdict_collector.py
 ```

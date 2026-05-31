@@ -3,9 +3,9 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent))
-from generate_feedback import generate_feedback
-from search_rag import search_documents
 
+from generate_feedback import generate_feedback
+from search_rag import search_documents_balanced
 
 def print_evidence(docs: list[dict]) -> None:
     print("\n검색 근거:")
@@ -22,17 +22,24 @@ def print_evidence(docs: list[dict]) -> None:
 
 
 def run_once(sentence: str) -> None:
-    docs = search_documents(sentence, top_k=5)
+    docs = search_documents_balanced(sentence, top_k=8)
     print_evidence(docs)
     feedback = generate_feedback(sentence, docs)
     print("\n피드백:")
     print(json.dumps(feedback, ensure_ascii=False, indent=2))
 
+    spoken = feedback.get("natural_spoken_sentence")
+    if spoken:
+        print("\n구어체 변환 문장:")
+        print(spoken)
+
 
 def main() -> None:
     print("이응 RAG 파이프라인 테스트입니다. 빈 줄을 입력하면 종료합니다.")
+
     while True:
         sentence = input("\n문장을 입력하세요: ").strip()
+
         if not sentence:
             print("종료합니다.")
             break
