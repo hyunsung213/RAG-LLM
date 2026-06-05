@@ -1,0 +1,9 @@
+requests
+python-dotenv
+xmltodict
+tqdm
+chromadb
+openai
+google-genai
+flask
+gunicorn

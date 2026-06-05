@@ -1,0 +1,79 @@
+{
+  "build": {
+    "max_general_examples": 80000,
+    "per_target_word_limit": 200,
+    "per_category_limit": 120,
+    "per_relation_limit": 120,
+    "fallback_limit": 300,
+    "min_text_len": 8,
+    "max_text_len": 60,
+    "allowed_sources": ["nikl_dialogue", "nikl_om"]
+  },
+  "candidate_limits": {
+    "target_word": 120,
+    "general_pool": 120,
+    "category": 40,
+    "relation": 40,
+    "fallback": 30
+  },
+  "length_rules": {
+    "ideal_min": 8,
+    "ideal_max": 35,
+    "soft_max": 60
+  },
+  "score_rules": {
+    "target_word_exact": 6,
+    "related_pattern": 4,
+    "keyword_match": 2,
+    "ideal_length": 2,
+    "daily_conversation_category": 1,
+    "friend_or_colleague_relation": 1,
+    "contains_name_placeholder": -2,
+    "too_long": -3,
+    "monologue_like": -2
+  },
+  "target_words": [
+    "권선징악",
+    "서운하다",
+    "정",
+    "눈치",
+    "인연",
+    "의리",
+    "효",
+    "한",
+    "낭만",
+    "소신",
+    "출세",
+    "궁합"
+  ],
+  "related_patterns": {
+    "정": ["정이 들다", "정들다", "정이 가다", "정이 많이 들다"],
+    "인연": ["인연이 있다", "인연이 닿다", "인연을 맺다"],
+    "눈치": ["눈치 보다", "눈치를 보다", "눈치껏", "눈치챘다"],
+    "서운하다": ["서운했어", "좀 서운하다", "서운한 마음"],
+    "의리": ["의리 있다", "의리 지키다"],
+    "소신": ["소신 있게", "소신 발언", "소신을 지키다"]
+  },
+  "stopwords": [
+    "그냥",
+    "진짜",
+    "정말",
+    "너무",
+    "조금",
+    "약간",
+    "오늘",
+    "이번",
+    "저는",
+    "나는",
+    "그거",
+    "이거"
+  ],
+  "category_preferences": [
+    "구어 > 사적대화 > 일상대화",
+    "온라인 대화 > 2인 대화"
+  ],
+  "relation_preferences": [
+    "친구",
+    "직장>동기/동료/동업자"
+  ]
+}

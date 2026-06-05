@@ -23,6 +23,20 @@ output/**/*
 !output/**/
 !output/**/.gitkeep
 
+# Consolidated local workspace artifacts
+ieung_service/.env
+ieung_service/raw_data/
+ieung_service/output/
+ieung_service/chroma_db/
+
+# Keep deployment-ready runtime assets versioned
+!render_deploy/output/
+!render_deploy/output/normalized/
+!render_deploy/output/normalized/spoken_lookup_index.json
+!render_deploy/output/validation/
+!render_deploy/output/validation/rag_documents_accepted.jsonl
+!render_deploy/chroma_db/
+
 # OS / editor
 .DS_Store
 Thumbs.db
