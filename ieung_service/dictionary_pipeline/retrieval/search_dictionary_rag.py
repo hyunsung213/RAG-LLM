@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import os
 import sys
+import csv
+import re
+import json
 from pathlib import Path
 
 import chromadb
@@ -13,22 +16,39 @@ from embedding_utils import is_quota_error, local_embedding
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 DEFAULT_QUERY = "나는 이 카페를 정이 들었다."
+SEED_PATH = ROOT_DIR / "seed_cultural_words.csv"
+SPOKEN_SEARCH_CONFIG_PATH = ROOT_DIR / "spoken_search_config.json"
+
+NORMALIZE_MATCH_RE = re.compile(r"[\s\-\^·ㆍ_]+")
 
 
-CULTURE_WORDS = [
-    "권선징악",
-    "서운하다",
-    "정",
-    "눈치",
-    "인연",
-    "의리",
-    "효",
-    "한",
-    "낭만",
-    "소신",
-    "출세",
-    "궁합",
-]
+def normalize_match_text(text: str) -> str:
+    return NORMALIZE_MATCH_RE.sub("", text or "")
+
+
+def load_culture_words() -> list[str]:
+    if not SEED_PATH.exists():
+        return []
+    with SEED_PATH.open("r", encoding="utf-8-sig", newline="") as f:
+        rows = list(csv.DictReader(f))
+    return [str(row.get("word", "")).strip() for row in rows if str(row.get("word", "")).strip()]
+
+
+CULTURE_WORDS = load_culture_words()
+
+
+def load_related_patterns() -> dict[str, list[str]]:
+    if not SPOKEN_SEARCH_CONFIG_PATH.exists():
+        return {}
+    with SPOKEN_SEARCH_CONFIG_PATH.open("r", encoding="utf-8-sig") as f:
+        data = json.load(f)
+    return {
+        str(word).strip(): [str(pattern).strip() for pattern in patterns if str(pattern).strip()]
+        for word, patterns in (data.get("related_patterns", {}) or {}).items()
+    }
+
+
+RELATED_PATTERNS = load_related_patterns()
 
 
 def resolve_project_path(value: str) -> Path:
@@ -182,9 +202,17 @@ def search_documents(
 
 
 def extract_target_word(sentence: str) -> str | None:
+    normalized_sentence = normalize_match_text(sentence)
     for word in sorted(CULTURE_WORDS, key=len, reverse=True):
-        if word in sentence:
+        normalized_word = normalize_match_text(word)
+        if not normalized_word:
+            continue
+        if word in sentence or normalized_word in normalized_sentence:
             return word
+        for pattern in RELATED_PATTERNS.get(word, []):
+            normalized_pattern = normalize_match_text(pattern)
+            if pattern in sentence or (normalized_pattern and normalized_pattern in normalized_sentence):
+                return word
     return None
 
 
@@ -229,6 +257,7 @@ def take_docs(docs: list[dict], limit: int) -> list[dict]:
 
 def search_target_word_documents(target_word: str) -> list[dict]:
     docs: list[dict] = []
+    normalized_target = normalize_match_text(target_word)
 
     try:
         docs.extend(
@@ -241,16 +270,17 @@ def search_target_word_documents(target_word: str) -> list[dict]:
     except Exception:
         pass
 
-    try:
-        docs.extend(
-            search_documents(
-                query=f"{target_word} 우리말샘 한국어기초사전 뜻풀이 용례",
-                top_k=30,
-                where_document={"$contains": target_word},
+    if len(normalized_target) >= 2:
+        try:
+            docs.extend(
+                search_documents(
+                    query=f"{target_word} 우리말샘 한국어기초사전 뜻풀이 용례",
+                    top_k=30,
+                    where_document={"$contains": target_word},
+                )
             )
-        )
-    except Exception:
-        pass
+        except Exception:
+            pass
 
     return dedupe_documents(docs)
 

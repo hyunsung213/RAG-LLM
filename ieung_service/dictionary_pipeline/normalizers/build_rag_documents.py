@@ -30,6 +30,11 @@ def load_examples_by_definition(path: Path) -> dict[str, list[dict]]:
 def build_word_definition_doc(definition: dict, examples: list[dict], index: int) -> dict:
     word = clean_text(definition.get("seed_word")) or clean_text(definition.get("word"))
     pos = clean_text(definition.get("pos"))
+    pronunciation = clean_text(definition.get("pronunciation"))
+    english_title = clean_text(definition.get("english_title"))
+    brief_meaning = clean_text(definition.get("brief_meaning"))
+    excluded_meaning = clean_text(definition.get("excluded_meaning"))
+    reference_example = clean_text(definition.get("reference_example"))
     definition_text = clean_text(definition.get("definition"))
     example_lines = [clean_text(example.get("example")) for example in examples if clean_text(example.get("example"))]
     example_block = "\n".join(f"예문: {line}" for line in example_lines)
@@ -37,8 +42,14 @@ def build_word_definition_doc(definition: dict, examples: list[dict], index: int
     content_parts = [
         f"단어: {word}",
         f"품사: {pos}",
-        f"뜻: {definition_text}",
     ]
+    if pronunciation:
+        content_parts.append(f"발음: {pronunciation}")
+    content_parts.extend(
+        [
+        f"뜻: {definition_text}",
+        ]
+    )
     if example_block:
         content_parts.append(example_block)
 
@@ -53,6 +64,12 @@ def build_word_definition_doc(definition: dict, examples: list[dict], index: int
             "pos": pos,
             "difficulty": clean_text(definition.get("difficulty")),
             "tags": definition.get("tags", []),
+            "pronunciation": pronunciation,
+            "english_title": english_title,
+            "brief_meaning": brief_meaning,
+            "excluded_meaning": excluded_meaning,
+            "reference_example": reference_example,
+            "spacing_allowed": clean_text(definition.get("spacing_allowed")),
             "definition_id": clean_text(definition.get("definition_id")),
             "source_word": clean_text(definition.get("word")),
             "source_word_id": clean_text(definition.get("source_word_id")),

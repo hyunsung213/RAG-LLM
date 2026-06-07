@@ -1,31 +1,31 @@
-word,word_type,pos,difficulty,culture_tags,priority,reason
-정,word,명사,intermediate,관계|감정|시간,1,한국 문화에서 인간관계와 시간의 축적을 설명하는 대표 정서어
-눈치,word,명사,intermediate,관계|상황판단|사회생활,2,상대의 마음과 상황을 읽는 한국어 대화 문화와 연결된 표현
-서운하다,word,형용사,intermediate,감정|관계|기대,3,관계 속 기대가 충족되지 않았을 때 느끼는 감정을 나타내는 표현
-인연,word,명사,intermediate,관계|운명|만남,4,사람 간 만남을 우연 이상의 의미로 설명하는 문화어휘
-의리,word,명사,intermediate,관계|신뢰|책임,5,친구나 공동체 관계에서 신뢰와 책임을 나타내는 표현
-효,word,명사,advanced,가족|예절|전통,6,부모와 가족 관계를 설명하는 전통적 가치어
-한,word,명사,advanced,감정|역사|문화,7,억울함과 슬픔이 오래 쌓인 정서를 설명하는 문화어휘
-체면,word,명사,advanced,사회생활|이미지|예절,8,사회적 이미지와 관계 유지 맥락을 설명하는 표현
-배려,word,명사,intermediate,관계|예절|공동체,9,상대방을 고려하는 말하기 방식과 연결되는 표현
-겸손,word,명사,intermediate,태도|예절|관계,10,자기표현을 낮추고 상대를 존중하는 말하기 문화와 연결된 표현
-소신,word,명사,advanced,가치관|태도|자기표현,11,자기 의견과 원칙을 지키는 태도를 나타내는 표현
-낭만,word,명사,intermediate,감정|분위기|문화,12,단순한 romance보다 분위기와 감성을 함께 담는 표현
-충,word,명사,advanced,전통|가치|공동체,13,전통적 가치관과 역사적 맥락을 설명하는 문화어휘
-권선징악,word,명사,advanced,도덕|이야기|문화,14,이야기와 콘텐츠에서 선악 구도를 설명하는 사자성어
-출세,word,명사,intermediate,사회|성공|가치관,15,사회적 성공과 지위 상승을 나타내는 표현
-궁합,word,명사,intermediate,관계|조화|문화,16,사람 관계뿐 아니라 음식과 조합에도 쓰이는 확장성 있는 표현
-억울하다,word,형용사,intermediate,감정|갈등|공정성,17,부당하거나 공정하지 않다고 느낄 때 쓰이는 표현
-아쉽다,word,형용사,intermediate,감정|기대|상황,18,부족함이나 미련이 남는 상황을 표현하는 말
-섭섭하다,word,형용사,intermediate,감정|관계|기대,19,기대와 관계 속 아쉬움을 나타내는 표현
-민망하다,word,형용사,intermediate,감정|체면|사회상황,20,사회적 상황에서 어색하거나 부끄러운 감정을 나타내는 표현
-무안하다,word,형용사,intermediate,감정|체면|관계,21,체면이 손상되거나 부끄러운 상황에서 쓰이는 표현
-답답하다,word,형용사,intermediate,감정|상황|소통,22,상황이 풀리지 않거나 마음이 막힌 느낌을 표현하는 말
-야속하다,word,형용사,advanced,감정|관계|실망,23,상대가 매정하거나 기대에 어긋났다고 느낄 때 쓰는 표현
-그립다,word,형용사,intermediate,감정|기억|관계,24,사람이나 장소를 보고 싶어하는 감정을 나타내는 표현
-애틋하다,word,형용사,advanced,감정|관계|기억,25,그리움과 소중함이 섞인 감정을 표현하는 말
-정겹다,word,형용사,advanced,감정|분위기|관계,26,따뜻하고 친근한 느낌을 나타내는 표현
-괜히,word,부사,intermediate,뉘앙스|감정|구어체,27,명확한 이유 없이 감정이나 행동이 생긴 상황을 표현하는 부사
-챙기다,word,동사,intermediate,배려|관계|일상,28,상대나 물건을 세심하게 돌보는 행동을 나타내는 표현
-신경 쓰다,expression,동사구,intermediate,관심|배려|부담,29,관심과 배려 또는 부담을 표현하는 실용적 구어 표현
-눈치를 보다,expression,동사구,intermediate,상황판단|관계|사회생활,30,상대의 반응이나 분위기를 살피는 한국어 표현
+word,word_type,pos,pronunciation,english_title,brief_meaning,excluded_meaning,example,spacing_allowed,difficulty,culture_tags,priority,reason
+정,word,명사,Jeong,Affection / Attachment,사람이나 대상에 애착이 생긴 마음,부사 의미(정 그렇다면) 제외,이 동네에 오래 살아 정이 들었어.,true,intermediate,관계|감정|애착,1,사람이나 대상에 애착이 생긴 마음
+서운하다,word,형용사,Seounhada,Disappointed / Hurt,기대와 다르게 되어 아쉬운 감정,-,연락 한 통 없어서 내심 서운했어.,true,intermediate,감정|관계|기대,2,기대와 다르게 되어 아쉬운 감정
+인연,word,명사,Inyeon,Fate / Connection,사람들 사이에 맺어지는 관계,-,우리가 여기서 다시 만나다니 보통 인연이 아니네.,true,intermediate,관계|만남|운명,3,사람들 사이에 맺어지는 관계
+의리,word,명사,Uiri,Loyalty / Fidelity,사람으로서 지켜야 할 도리,-,친구 사이에 의리를 저버릴 수는 없지.,true,intermediate,관계|신뢰|도리,4,사람으로서 지켜야 할 도리
+효,word,명사,Hyo,Filial Piety,부모를 잘 모시고 받드는 일,-,부모님께 효를 다하는 것이 자식의 도리이다.,true,advanced,가족|예절|전통,5,부모를 잘 모시고 받드는 일
+한,word,명사,Han,Deep Sorrow / Resentment,억울함과 슬픔이 오래 응어리진 마음,"수 관형사 '한(하나)' 제외",가슴 깊은 곳에 한이 맺혔어.,true,advanced,감정|역사|응어리,6,억울함과 슬픔이 오래 응어리진 마음
+체면,word,명사,Chemyeon,Face / Dignity,사회적으로 지키려는 얼굴과 입장,-,그 일로 사람들 앞에서 체면이 깎였어.,true,advanced,사회생활|예절|이미지,7,사회적으로 지키려는 얼굴과 입장
+배려,word,명사,Baeryeo,Consideration / Care,상대를 도와주거나 보살피는 태도,-,약자를 먼저 생각하는 배려가 돋보인다.,true,intermediate,관계|배려|공동체,8,상대를 도와주거나 보살피는 태도
+겸손,word,명사,Gyeomson,Modesty / Humility,자기를 낮추고 남을 존중하는 태도,-,그는 실력이 뛰어나면서도 늘 겸손하다.,true,intermediate,태도|존중|예절,9,자기를 낮추고 남을 존중하는 태도
+소신,word,명사,Sosin,Conviction / Belief,굳게 믿는 생각,작은 몸을 뜻하는 한자어 제외,주변의 반대에도 자신의 소신을 굽히지 않았다.,true,advanced,가치관|원칙|태도,10,굳게 믿는 생각
+낭만,word,명사,Nangman,Romance / Romanticism,감정적이고 이상적인 분위기,-,비 오는 날 창가에 앉아 커피를 마시는 것도 낭만이다.,true,intermediate,감정|분위기|이상,11,감정적이고 이상적인 분위기
+충,word,명사,Chung,Loyalty / Patriotism,나라나 임금 등에 충성을 다함,곤충/벌레(충) 의미 제외,나라에 충을 다하다.,true,advanced,전통|가치|충성,12,나라나 임금 등에 충성을 다함
+권선징악,word,명사,Gwonseonjingak,Poetic Justice,선을 권하고 악을 벌함,-,고전 소설은 대부분 권선징악의 주제를 담고 있다.,true,advanced,도덕|이야기|사자성어,13,선을 권하고 악을 벌함
+출세,word,명사,Chulse,Success in Life,사회적으로 높은 지위에 오름,-,그는 고향을 떠나 서울에서 크게 출세했다.,true,intermediate,사회|성공|지위,14,사회적으로 높은 지위에 오름
+궁합,word,명사,Gunghap,Compatibility / Chemistry,서로 잘 맞는 정도,-,이 두 음식은 맛의 궁합이 아주 좋다.,true,intermediate,관계|조화|궁합,15,서로 잘 맞는 정도
+억울하다,word,형용사,Eogulhada,Unfair / Falsely Accused,잘못 없이 피해를 입어 답답함,-,하지도 않은 일로 오해를 받아 너무 억울하다.,true,intermediate,감정|갈등|공정성,16,잘못 없이 피해를 입어 답답함
+아쉽다,word,형용사,Aswipta,Regrettable / Lacking,부족하거나 미련이 남는 감정,-,여행이 벌써 끝나다니 참 아쉽다.,true,intermediate,감정|미련|상황,17,부족하거나 미련이 남는 감정
+섭섭하다,word,형용사,Seopseophada,Disappointed / Sad,서운하고 아쉬운 감정,-,제대로 인사도 못 하고 헤어져서 섭섭하다.,true,intermediate,감정|관계|아쉬움,18,서운하고 아쉬운 감정
+민망하다,word,형용사,Minmanghada,Embarrassed / Awkward,어색하거나 부끄러운 감정,-,사람들이 다 쳐다봐서 얼굴이 화끈거리고 민망했어.,true,intermediate,감정|사회상황|부끄러움,19,어색하거나 부끄러운 감정
+무안하다,word,형용사,Muanhada,Ashamed / Embarrassed,창피해서 얼굴 들기 어려운 감정,-,반갑게 인사했는데 모른 척해서 무안했다.,true,intermediate,감정|체면|부끄러움,20,창피해서 얼굴 들기 어려운 감정
+답답하다,word,형용사,Dapdaphada,Frustrated / Stuffy,마음이나 상황이 막힌 느낌,물리적으로 좁아 숨막힘 제외,일이 마음대로 안 풀려서 속이 답답하다.,true,intermediate,감정|상황|소통,21,마음이나 상황이 막힌 느낌
+야속하다,word,형용사,Yasokhada,Cold-hearted / Resentful,상대가 매정하게 느껴져 서운함,-,내 마음도 몰라주는 네가 오늘따라 야속하다.,true,advanced,감정|관계|실망,22,상대가 매정하게 느껴져 서운함
+그립다,word,형용사,Geuripta,Missing / Longing for,보고 싶고 만나고 싶은 마음,-,어린 시절 친구들과 뛰어놀던 고향이 그립다.,true,intermediate,감정|기억|그리움,23,보고 싶고 만나고 싶은 마음
+애틋하다,word,형용사,Aeteuthada,Fond / Deeply Affectionate,안타까움과 소중함이 섞인 감정,-,두 사람의 애틋한 사연에 모두가 눈물을 흘렸다.,true,advanced,감정|관계|소중함,24,안타까움과 소중함이 섞인 감정
+정겹다,word,형용사,Jeonggyeopda,Warm and Friendly,정이 느껴질 만큼 다정함,-,시골 장터의 정겨운 풍경이 마음에 든다.,true,advanced,감정|분위기|친근함,25,정이 느껴질 만큼 다정함
+괜히,word,부사,Gwaenhi,Pointlessly / For nothing,특별한 이유 없이,-,괜히 화를 낸 것 같아 미안해.,true,intermediate,뉘앙스|감정|구어체,26,특별한 이유 없이
+챙기다,word,동사,Chaenggida,To take care of / To pack,필요한 것을 살피고 돌봄,물건을 훔치거나 빼돌리는 의미 제외,바빠도 끼니는 꼭 챙겨 먹어라.,true,intermediate,돌봄|일상|배려,27,필요한 것을 살피고 돌봄
+신경 쓰다,expression,구,Singyeong sseuda,To care / To pay attention,세심하게 살피거나 마음을 씀,생물학적 '신경(nerve)' 의미 제외,괜히 남 눈치 보지 말고 네 일에 신경 써.,true,intermediate,관심|배려|부담,28,세심하게 살피거나 마음을 씀
+흥겹다,word,형용사,Heunggyeopda,Joyful / Excited,흥이 나서 즐거움,-,사람들은 흥겨운 음악에 맞춰 춤을 추었다.,true,intermediate,감정|즐거움|분위기,29,흥이 나서 즐거움
+눈치,word,명사,Nunchi,Social Sense / Tact,말하지 않아도 상황과 마음을 읽는 능력,-,그는 눈치가 빨라서 분위기 파악을 잘한다.,true,intermediate,관계|상황판단|사회생활,30,말하지 않아도 상황과 마음을 읽는 능력

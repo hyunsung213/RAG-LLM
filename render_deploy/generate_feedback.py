@@ -4,13 +4,15 @@ import json
 import os
 import re
 import sys
+import csv
+import json
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 ROOT_DIR = Path(__file__).resolve().parent
-sys.path.append(str(ROOT_DIR / "dictionary_pipeline" / "retrieval"))
-sys.path.append(str(ROOT_DIR / "spoken_labeling"))
+sys.path.insert(0, str(ROOT_DIR / "dictionary_pipeline" / "retrieval"))
+sys.path.insert(0, str(ROOT_DIR / "spoken_labeling"))
 
 try:
     from embedding_utils import is_quota_error
@@ -22,25 +24,41 @@ except Exception:
 try:
     from search_dictionary_rag import extract_target_word, search_dictionary_documents_balanced
 except Exception:
-    CULTURE_WORDS = [
-        "권선징악",
-        "서운하다",
-        "정",
-        "눈치",
-        "인연",
-        "의리",
-        "효",
-        "한",
-        "낭만",
-        "소신",
-        "출세",
-        "궁합",
-    ]
+    def load_culture_words() -> list[str]:
+        seed_path = ROOT_DIR / "seed_cultural_words.csv"
+        if not seed_path.exists():
+            return []
+        with seed_path.open("r", encoding="utf-8-sig", newline="") as f:
+            rows = list(csv.DictReader(f))
+        return [str(row.get("word", "")).strip() for row in rows if str(row.get("word", "")).strip()]
+
+    def load_related_patterns() -> dict[str, list[str]]:
+        config_path = ROOT_DIR / "spoken_search_config.json"
+        if not config_path.exists():
+            return {}
+        with config_path.open("r", encoding="utf-8-sig") as f:
+            data = json.load(f)
+        return {
+            str(word).strip(): [str(pattern).strip() for pattern in patterns if str(pattern).strip()]
+            for word, patterns in (data.get("related_patterns", {}) or {}).items()
+        }
+
+    def normalize_match_text(text: str) -> str:
+        return re.sub(r"[\s\-\^·ㆍ_]+", "", text or "")
+
+    CULTURE_WORDS = load_culture_words()
+    RELATED_PATTERNS = load_related_patterns()
 
     def extract_target_word(sentence: str) -> str | None:
+        normalized_sentence = normalize_match_text(sentence)
         for word in sorted(CULTURE_WORDS, key=len, reverse=True):
-            if word in sentence:
+            normalized_word = normalize_match_text(word)
+            if word in sentence or normalized_word in normalized_sentence:
                 return word
+            for pattern in RELATED_PATTERNS.get(word, []):
+                normalized_pattern = normalize_match_text(pattern)
+                if pattern in sentence or (normalized_pattern and normalized_pattern in normalized_sentence):
+                    return word
         return None
 
     def search_dictionary_documents_balanced(_query: str, top_k: int = 6) -> list[dict]:
@@ -313,6 +331,18 @@ def build_fallback_feedback(user_sentence: str, target_word: str | None, diction
         grammar_status = "incorrect"
         grammar_message = "'정이 들다'와 함께 쓸 때는 목적격 조사 '를'보다 부사격 조사 '에'가 더 자연스럽습니다."
         grammar_suggestion = corrected
+    elif target_word and " " in target_word:
+        compact_target = re.sub(r"\s+", "", target_word)
+        if compact_target in user_sentence and target_word not in user_sentence:
+            corrected = user_sentence.replace(compact_target, target_word)
+            grammar_status = "incorrect"
+            grammar_message = f"'{target_word}'는 띄어 써야 하는 표현입니다."
+            grammar_suggestion = corrected
+        elif target_word == "신경 쓰다" and "신경써" in user_sentence:
+            corrected = user_sentence.replace("신경써", "신경 써")
+            grammar_status = "incorrect"
+            grammar_message = "'신경 쓰다'는 활용형에서도 띄어 써야 하므로 '신경 써'가 올바른 표기입니다."
+            grammar_suggestion = corrected
 
     dictionary_summary = build_dictionary_evidence_summary(dictionary_docs)
     spoken_examples = spoken_result.get("examples", [])
@@ -369,6 +399,10 @@ def sanitize_feedback_result(result: dict, user_sentence: str, target_word: str 
     result["tpo"].setdefault("reason", fallback["tpo"]["reason"])
     for key in ["공적", "사적", "반격식"]:
         result["tpo"].setdefault(key, fallback["tpo"][key])
+
+    if not dictionary_docs:
+        result["grammar"]["reason"] = fallback["grammar"]["reason"]
+        result["meaning"]["reason"] = fallback["meaning"]["reason"]
 
     return result
 

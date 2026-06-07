@@ -21,6 +21,10 @@
 
 이 폴더를 별도 Git 저장소로 올리거나, 현재 저장소를 그대로 사용할 경우 Render에서 Root Directory를 `render_deploy`로 지정합니다.
 
+더 빠른 방식:
+- 저장소 루트의 [render.yaml](C:\Users\SHIN HYUN SEONG\Desktop\RAG_LLM\render.yaml)을 사용해 Blueprint로 생성
+- 이 경우 Render가 `rootDir: render_deploy` 설정을 읽습니다.
+
 필수 환경변수:
 - `GEMINI_API_KEY`
 
@@ -33,12 +37,15 @@
 
 현재 기본값은 `.env`에 반영되어 있습니다.
 
+빠르게 확인하려면 [ENV_CHECKLIST.md](C:\Users\SHIN HYUN SEONG\Desktop\RAG_LLM\render_deploy\ENV_CHECKLIST.md)를 보면 됩니다.
+
 ## 2. Render에서 Web Service 생성
 
-1. Render 대시보드에서 `New +` -> `Web Service`
+1. Render 대시보드에서 `New +` -> `Blueprint` 또는 `Web Service`
 2. GitHub 저장소 연결
 3. 배포할 저장소 선택
-4. 서비스 생성 화면에서 아래처럼 설정
+4. `render.yaml`을 사용할 경우 Blueprint 미리보기에서 서비스 설정 확인
+5. 수동 생성이라면 서비스 생성 화면에서 아래처럼 설정
 
 - Runtime: `Docker`
 - Root Directory: `render_deploy`

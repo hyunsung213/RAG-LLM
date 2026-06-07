@@ -11,11 +11,16 @@ DEFAULT_CONFIG_PATH = ROOT_DIR / "spoken_search_config.json"
 
 
 TOKEN_RE = re.compile(r"[가-힣A-Za-z0-9]+")
+NORMALIZE_MATCH_RE = re.compile(r"[\s\-\^·ㆍ_]+")
 
 
 def load_json(path: Path) -> dict:
     with path.open("r", encoding="utf-8-sig") as f:
         return json.load(f)
+
+
+def normalize_match_text(text: str) -> str:
+    return NORMALIZE_MATCH_RE.sub("", text or "")
 
 
 def extract_keywords(sentence: str, stopwords: set[str]) -> list[str]:
@@ -31,10 +36,13 @@ def extract_keywords(sentence: str, stopwords: set[str]) -> list[str]:
 
 
 def contains_any_patterns(text: str, patterns: list[str]) -> bool:
+    normalized_text = normalize_match_text(text)
     for pattern in patterns:
         if not pattern:
             continue
         if pattern in text:
+            return True
+        if normalize_match_text(pattern) in normalized_text:
             return True
         if pattern.endswith("다") and pattern[:-1] and pattern[:-1] in text:
             return True
@@ -42,6 +50,7 @@ def contains_any_patterns(text: str, patterns: list[str]) -> bool:
 
 
 def contains_related_pattern(text: str, target_word: str, patterns: list[str]) -> bool:
+    normalized_text = normalize_match_text(text)
     for pattern in patterns:
         if not pattern:
             continue
@@ -53,7 +62,7 @@ def contains_related_pattern(text: str, target_word: str, patterns: list[str]) -
             if len(target_word) == 1:
                 if re.search(rf"(^|[^가-힣A-Za-z0-9]){re.escape(variant)}", text):
                     return True
-            elif variant in text:
+            elif variant in text or normalize_match_text(variant) in normalized_text:
                 return True
     return False
 
@@ -67,7 +76,7 @@ def contains_target_word(text: str, target_word: str, related_patterns: dict[str
         return True
 
     if len(target_word) >= 2:
-        return target_word in text
+        return target_word in text or normalize_match_text(target_word) in normalize_match_text(text)
     return False
 
 

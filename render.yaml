@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: rag-llm-feedback-api
+    runtime: docker
+    plan: starter
+    region: singapore
+    rootDir: render_deploy
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: IEUNG_CHAT_PROVIDER
+        value: gemini
+      - key: IEUNG_EMBEDDING_PROVIDER
+        value: gemini
+      - key: GEMINI_CHAT_MODEL
+        value: gemini-2.5-flash
+      - key: GEMINI_EMBEDDING_MODEL
+        value: gemini-embedding-001
+      - key: CHROMA_PERSIST_DIR
+        value: ./chroma_db
+      - key: CHROMA_COLLECTION_NAME
+        value: ieung_rag
+      - key: IEUNG_API_HOST
+        value: 0.0.0.0
+      - key: IEUNG_API_PORT
+        value: "10000"

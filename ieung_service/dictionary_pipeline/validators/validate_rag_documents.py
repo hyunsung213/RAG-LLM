@@ -19,7 +19,7 @@ REJECTED_PATH = VALIDATION_DIR / "rag_documents_rejected.jsonl"
 REVIEW_NEEDED_PATH = VALIDATION_DIR / "rag_documents_review_needed.jsonl"
 
 
-ALLOWED_POS = {"명사", "동사", "형용사", "부사", "동사구", "명사구"}
+ALLOWED_POS = {"명사", "동사", "형용사", "부사", "동사구", "명사구", "구"}
 REJECT_POS = {"접사", "의존 명사", "품사 없음", "관형사", "대명사", ""}
 STRICT_ONE_CHAR_WORDS = {"정", "한", "효", "충"}
 
@@ -36,6 +36,10 @@ GENERAL_FORBIDDEN_BY_WORD = {
     "한": ["하나", "같은", "대략", "끝", "조건", "접두사", "접미사", "한글", "한가"],
     "효": ["효과", "효율", "효과음"],
     "충": ["충격", "충고", "충돌", "충분"],
+    "소신": ["작은 몸", "신하가 자기를 낮추어", "소갈", "물때"],
+    "답답하다": ["숨이 답답하다", "가슴이 답답하다 못해 숨이 막히", "좁아서 답답"],
+    "챙기다": ["훔치", "빼돌리", "가져가다"],
+    "신경 쓰다": ["신경 조직", "중추 신경", "말초 신경"],
 }
 
 TARGET_KEYWORDS_BY_WORD = {
@@ -266,8 +270,9 @@ def validate_document(doc: dict) -> dict:
         return build_validation("accepted", score, reasons, warnings)
 
     if normalized_match:
-        reasons.append("source_word가 표기상 하이픈/공백만 다른 후보임")
-        return build_validation("review_needed", 0.6, reasons, warnings)
+        reasons.append("source_word가 표기상 하이픈/공백만 다른 후보이며 띄어쓰기 차이는 허용")
+        score += 0.18
+        return build_validation("accepted", score, reasons, warnings)
 
     if normalize_word(word) in normalize_word(source_word):
         reasons.append("source_word가 seed word를 포함하는 파생어 후보임")
