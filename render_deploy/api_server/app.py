@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from flask import Flask, jsonify, request
@@ -25,10 +26,19 @@ def service_status() -> dict:
     output_dir = SERVICE_DIR / "output"
     normalized_dir = output_dir / "normalized"
     validation_dir = output_dir / "validation"
+    chat_provider = os.getenv("IEUNG_CHAT_PROVIDER", "gemini").strip().lower()
+    embedding_provider = os.getenv("IEUNG_EMBEDDING_PROVIDER", "gemini").strip().lower()
+
+    provider_keys_ready = True
+    if chat_provider == "gemini" or embedding_provider == "gemini":
+        provider_keys_ready = provider_keys_ready and bool(os.getenv("GEMINI_API_KEY"))
+    if chat_provider == "openai" or embedding_provider == "openai":
+        provider_keys_ready = provider_keys_ready and bool(os.getenv("OPENAI_API_KEY"))
 
     return {
         "service_dir": str(SERVICE_DIR),
-        "env_ready": (SERVICE_DIR / ".env").exists(),
+        "env_file_ready": (SERVICE_DIR / ".env").exists(),
+        "provider_keys_ready": provider_keys_ready,
         "chroma_ready": chroma_dir.exists(),
         "spoken_index_ready": (normalized_dir / "spoken_lookup_index.json").exists(),
         "spoken_dataset_ready": (normalized_dir / "spoken_reference_dataset.jsonl").exists(),
@@ -77,7 +87,7 @@ def create_app() -> Flask:
         status = service_status()
         ready = all(
             [
-                status["env_ready"],
+                status["provider_keys_ready"],
                 status["chroma_ready"],
                 status["spoken_index_ready"],
                 status["dictionary_validation_ready"],
@@ -135,4 +145,3 @@ def create_app() -> Flask:
         return json_error("METHOD_NOT_ALLOWED", "허용되지 않은 메서드입니다.", 405)
 
     return app
-
