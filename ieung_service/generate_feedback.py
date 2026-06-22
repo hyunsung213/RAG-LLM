@@ -357,10 +357,98 @@ def split_sentences(text: str) -> list[str]:
     ]
 
 
+B_IRREGULAR_TPO_ENDINGS = {
+    "아쉽다": {
+        "smart_casual": "아쉬워요",
+        "casual": "아쉬워",
+    },
+    "그립다": {
+        "smart_casual": "그리워요",
+        "casual": "그리워",
+    },
+    "정겹다": {
+        "smart_casual": "정겨워요",
+        "casual": "정겨워",
+    },
+    "흥겹다": {
+        "smart_casual": "흥겨워요",
+        "casual": "흥겨워",
+    },
+}
+
+TPO_SURFACE_FIXES = [
+    ("아쉽어요", "아쉬워요"),
+    ("아쉬어요", "아쉬워요"),
+    ("아쉽어", "아쉬워"),
+    ("아쉬어", "아쉬워"),
+    ("그립어요", "그리워요"),
+    ("그리어요", "그리워요"),
+    ("그립어", "그리워"),
+    ("그리어", "그리워"),
+    ("정겹어요", "정겨워요"),
+    ("정겨어요", "정겨워요"),
+    ("정겹어", "정겨워"),
+    ("정겨어", "정겨워"),
+    ("흥겹어요", "흥겨워요"),
+    ("흥겨어요", "흥겨워요"),
+    ("흥겹어", "흥겨워"),
+    ("흥겨어", "흥겨워"),
+    ("신경써", "신경 써"),
+    ("신경썼", "신경 썼"),
+    ("쫒", "쫓"),
+]
+
+TPO_SPACING_PATTERNS = [
+    (
+        re.compile(r"(?<![그이저])(?<=[가-힣])것(?=(?:이|은|을|도|만|처럼|같|보다|으로|에|까지|부터|입|였|일|$|[\s,.!?]))"),
+        " 것",
+    ),
+    (
+        re.compile(r"(?<![그이저])(?<=[가-힣])거(?=(?:야|예요|에요|죠|지|든|라|랑|나|는|를|로|$|[\s,.!?]))"),
+        " 거",
+    ),
+    (
+        re.compile(r"(할|될|갈|볼|먹을|쓸|살|찾을|챙길|지킬|느낄|말할|사용할|표현할|고칠|확인할)수(?=(?:가|는|도|를|밖에|없|있|$|[\s,.!?]))"),
+        r"\1 수",
+    ),
+]
+
+
+def convert_b_irregular_tpo_ending(sentence: str, style: str) -> str | None:
+    if style not in {"smart_casual", "casual"}:
+        return None
+
+    for lemma, endings in B_IRREGULAR_TPO_ENDINGS.items():
+        if sentence.endswith(lemma):
+            return sentence[: -len(lemma)] + endings[style]
+    return None
+
+
+def sanitize_tpo_sentence(text: str) -> str:
+    sentence = re.sub(r"\s+", " ", str(text or "")).strip()
+    for old, new in TPO_SURFACE_FIXES:
+        sentence = sentence.replace(old, new)
+    for pattern, replacement in TPO_SPACING_PATTERNS:
+        sentence = pattern.sub(replacement, sentence)
+    sentence = re.sub(r"\s+([,.!?])", r"\1", sentence)
+    return sentence
+
+
+def has_tpo_grammar_risk(text: str) -> bool:
+    sentence = str(text or "")
+    if any(old in sentence for old, _new in TPO_SURFACE_FIXES):
+        return True
+    return any(pattern.search(sentence) for pattern, _replacement in TPO_SPACING_PATTERNS)
+
+
 def transform_sentence_ending(sentence: str, style: str) -> str:
     sentence = sentence.strip().rstrip(".!?")
     if not sentence:
         return sentence
+
+    irregular = convert_b_irregular_tpo_ending(sentence, style)
+    if irregular is not None:
+        return irregular
 
     if style == "formal":
         replacements = [
@@ -509,9 +597,9 @@ def build_fallback_feedback(user_sentence: str, target_word: str | None, diction
     )
     meaning_suggestion = meaning_validation.get("suggestion")
     base_sentence = meaning_suggestion or (corrected if corrected != user_sentence else user_sentence)
-    smart_casual = to_smart_casual_sentence(base_sentence)
-    formal = to_formal_sentence(base_sentence)
-    casual = to_casual_sentence(base_sentence)
+    smart_casual = sanitize_tpo_sentence(to_smart_casual_sentence(base_sentence))
+    formal = sanitize_tpo_sentence(to_formal_sentence(base_sentence))
+    casual = sanitize_tpo_sentence(to_casual_sentence(base_sentence))
     grammar_reason = build_dictionary_reason(dictionary_summary, grammar_message)
     meaning_reason = build_dictionary_reason(dictionary_summary, meaning_message)
     tpo_reason = build_spoken_reason(spoken_examples)
@@ -561,12 +649,19 @@ def sanitize_feedback_result(result: dict, user_sentence: str, target_word: str 
         result["grammar"] = fallback["grammar"]
     if fallback["meaning"]["correct"] is False:
         result["meaning"] = fallback["meaning"]
+    if not isinstance(result.get("tpo"), dict):
+        result["tpo"] = dict(fallback["tpo"])
     result["tpo"].setdefault("best_fit", fallback["tpo"]["best_fit"])
     result["tpo"].setdefault("reason", fallback["tpo"]["reason"])
     for key in ["공적", "사적", "반격식"]:
         result["tpo"].setdefault(key, fallback["tpo"][key])
-        if not preserves_original_context(user_sentence, str(result["tpo"].get(key, "")), target_word):
-            result["tpo"][key] = fallback["tpo"][key]
+        candidate = sanitize_tpo_sentence(str(result["tpo"].get(key, "")))
+        if (
+            not preserves_original_context(user_sentence, candidate, target_word)
+            or has_tpo_grammar_risk(candidate)
+        ):
+            candidate = sanitize_tpo_sentence(fallback["tpo"][key])
+        result["tpo"][key] = candidate
 
     if not dictionary_docs:
         result["grammar"]["reason"] = fallback["grammar"]["reason"]
