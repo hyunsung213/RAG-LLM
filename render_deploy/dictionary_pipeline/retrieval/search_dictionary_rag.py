@@ -311,6 +311,9 @@ def search_target_word_documents(target_word: str) -> list[dict]:
     except Exception:
         pass
 
+    if docs:
+        return dedupe_documents(docs)
+
     try:
         docs.extend(
             search_documents(

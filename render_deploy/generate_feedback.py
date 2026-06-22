@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 ROOT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT_DIR / "dictionary_pipeline" / "retrieval"))
 sys.path.insert(0, str(ROOT_DIR / "spoken_labeling"))
+sys.path.insert(0, str(ROOT_DIR / "meaning_validation"))
 
 try:
     from embedding_utils import is_quota_error
@@ -66,6 +67,18 @@ except Exception:
 
 
 from search_spoken_examples import search_spoken_examples
+
+try:
+    from validate_meaning import validate_meaning_usage
+except Exception:
+    def validate_meaning_usage(_sentence: str, _target_word: str | None) -> dict:
+        return {
+            "correct": True,
+            "confidence": 0.0,
+            "message": "대상 문화어휘의 의미는 현재 문맥에서 크게 어긋나지 않습니다.",
+            "suggestion": None,
+            "matched_terms": [],
+        }
 
 
 DEFAULT_SENTENCE = "나는 이 카페를 정이 들었다."
@@ -480,12 +493,21 @@ def build_fallback_feedback(user_sentence: str, target_word: str | None, diction
 
     dictionary_summary = build_dictionary_evidence_summary(dictionary_docs)
     spoken_examples = spoken_result.get("examples", [])
-    meaning_issue = detect_meaning_issue(user_sentence, target_word)
-    meaning_correct = meaning_issue is None
-    meaning_message = (
-        meaning_issue["message"] if meaning_issue else "대상 문화어휘의 의미는 현재 문맥에서 크게 어긋나지 않습니다."
+    meaning_validation = validate_meaning_usage(user_sentence, target_word)
+    legacy_meaning_issue = detect_meaning_issue(user_sentence, target_word)
+    if legacy_meaning_issue and meaning_validation.get("correct") is not False:
+        meaning_validation = {
+            "correct": False,
+            "message": legacy_meaning_issue["message"],
+            "suggestion": legacy_meaning_issue["suggestion"],
+            "matched_terms": [],
+        }
+
+    meaning_correct = bool(meaning_validation.get("correct", True))
+    meaning_message = str(
+        meaning_validation.get("message") or "대상 문화어휘의 의미는 현재 문맥에서 크게 어긋나지 않습니다."
     )
-    meaning_suggestion = meaning_issue["suggestion"] if meaning_issue else None
+    meaning_suggestion = meaning_validation.get("suggestion")
     base_sentence = meaning_suggestion or (corrected if corrected != user_sentence else user_sentence)
     smart_casual = to_smart_casual_sentence(base_sentence)
     formal = to_formal_sentence(base_sentence)
