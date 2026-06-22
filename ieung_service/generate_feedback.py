@@ -198,6 +198,9 @@ def build_user_prompt(user_sentence: str, dictionary_docs: list[dict], spoken_re
 2. 의미 판단
 3. TPO별 추천 문장 3개 작성
 4. reason은 출처 포함 1~2문장으로 짧게 작성
+5. TPO 추천은 원문과 같은 사건, 대상, 관계, 장소를 유지하고 말투와 격식만 바꾼다.
+6. 원문에 없는 상황을 만들지 마라. 예: "공식적인 자리", "중요한 미팅" 같은 새 배경 추가 금지.
+7. 공적 표현이 어색한 사적 사건이어도 같은 내용을 더 격식 있게만 바꾼다.
 
 [출력 JSON 형식]
 {{
@@ -273,52 +276,158 @@ def parse_model_json(raw_text: str) -> dict:
     return {"json_parse_error": True, "raw_text": raw_text}
 
 
-def to_formal_sentence(text: str) -> str:
-    sentence = str(text or "").strip().rstrip(".!?")
-    sentence = sentence.replace("나는 ", "저는 ").replace("저 ", "저는 ").replace("나 ", "저는 ")
-    sentence = sentence.replace(" 들었어", " 들었습니다")
-    sentence = sentence.replace(" 있어?", " 있습니다.")
-    if sentence.endswith("들었다"):
-        sentence = sentence[:-3] + "들었습니다."
-    elif sentence.endswith("했다"):
-        sentence = sentence[:-2] + "했습니다."
-    elif sentence.endswith("어"):
-        sentence = sentence[:-1] + "습니다."
-    elif sentence.endswith("어요"):
-        sentence = sentence[:-2] + "습니다."
-    elif sentence.endswith("요"):
-        sentence = sentence[:-1] + "니다."
+PARTICLE_RE = re.compile(r"(은|는|이|가|을|를|에|에서|으로|로|와|과|랑|하고|도|만|까지|부터|보다)$")
+GENERIC_CONTEXT_WORDS = {
+    "문장",
+    "표현",
+    "사람",
+    "상황",
+    "정도",
+    "때문",
+    "이번",
+    "오늘",
+    "내일",
+    "어제",
+}
+
+
+def normalize_context_text(text: str) -> str:
+    return re.sub(r"[\s\-\^·ㆍ_.,!?\"'()]+", "", text or "")
+
+
+def strip_particle(token: str) -> str:
+    previous = token
+    while True:
+        current = PARTICLE_RE.sub("", previous)
+        if current == previous:
+            return current
+        previous = current
+
+
+def extract_context_anchors(sentence: str, target_word: str | None) -> list[str]:
+    target_norm = normalize_context_text(target_word or "")
+    anchors: list[str] = []
+    for token in re.findall(r"[가-힣A-Za-z0-9]+", sentence or ""):
+        token = strip_particle(token.strip())
+        if len(token) < 2 or token in GENERIC_CONTEXT_WORDS:
+            continue
+        token_norm = normalize_context_text(token)
+        if not token_norm or token_norm == target_norm:
+            continue
+        if token_norm not in anchors:
+            anchors.append(token_norm)
+    return anchors[:6]
+
+
+def preserves_original_context(original_sentence: str, candidate: str, target_word: str | None) -> bool:
+    candidate_norm = normalize_context_text(candidate)
+    if not candidate_norm:
+        return False
+
+    target_norm = normalize_context_text(target_word or "")
+    if target_norm and target_norm not in candidate_norm:
+        return False
+
+    anchors = extract_context_anchors(original_sentence, target_word)
+    if not anchors:
+        return True
+    return any(anchor in candidate_norm for anchor in anchors)
+
+
+def split_sentences(text: str) -> list[str]:
+    return [
+        part.strip()
+        for part in re.split(r"[.!?]+", str(text or "").strip())
+        if part.strip()
+    ]
+
+
+def transform_sentence_ending(sentence: str, style: str) -> str:
+    sentence = sentence.strip().rstrip(".!?")
+    if not sentence:
+        return sentence
+
+    if style == "formal":
+        replacements = [
+            ("했습니다", "했습니다"),
+            ("했어요", "했습니다"),
+            ("했다", "했습니다"),
+            ("합니다", "합니다"),
+            ("해요", "합니다"),
+            ("하다", "합니다"),
+            ("입니다", "입니다"),
+            ("이에요", "입니다"),
+            ("예요", "입니다"),
+            ("이다", "입니다"),
+            ("있어요", "있습니다"),
+            ("있다", "있습니다"),
+            ("없어요", "없습니다"),
+            ("없다", "없습니다"),
+            ("어요", "습니다"),
+            ("어", "습니다"),
+            ("다", "습니다"),
+        ]
+    elif style == "smart_casual":
+        replacements = [
+            ("했습니다", "했어요"),
+            ("했다", "했어요"),
+            ("합니다", "해요"),
+            ("하다", "해요"),
+            ("입니다", "이에요"),
+            ("이다", "이에요"),
+            ("있다", "있어요"),
+            ("없다", "없어요"),
+            ("다", "어요"),
+        ]
     else:
-        sentence = sentence + "."
+        replacements = [
+            ("했습니다", "했어"),
+            ("했어요", "했어"),
+            ("했다", "했어"),
+            ("합니다", "해"),
+            ("해요", "해"),
+            ("하다", "해"),
+            ("입니다", "이야"),
+            ("이에요", "이야"),
+            ("예요", "야"),
+            ("이다", "이야"),
+            ("있어요", "있어"),
+            ("있다", "있어"),
+            ("없어요", "없어"),
+            ("없다", "없어"),
+            ("어요", "어"),
+            ("다", "어"),
+        ]
+
+    for old, new in replacements:
+        if sentence.endswith(old):
+            return sentence[: -len(old)] + new
     return sentence
+
+
+def transform_register(text: str, style: str) -> str:
+    sentence = str(text or "").strip()
+    if style == "formal":
+        sentence = sentence.replace("나는 ", "저는 ").replace("나 ", "저는 ")
+    elif style == "smart_casual":
+        sentence = sentence.replace("나는 ", "저는 ").replace("나 ", "저 ")
+    else:
+        sentence = sentence.replace("저는 ", "나는 ").replace("저 ", "나 ")
+
+    converted = [transform_sentence_ending(part, style) for part in split_sentences(sentence)]
+    return ". ".join(part for part in converted if part) + "."
+
+
+def to_formal_sentence(text: str) -> str:
+    return transform_register(text, "formal")
 
 
 def to_smart_casual_sentence(text: str) -> str:
-    sentence = str(text or "").strip().rstrip(".!?")
-    sentence = sentence.replace("나는 ", "저는 ").replace("나 ", "저 ")
-    sentence = sentence.replace(" 들었어", " 들었어요")
-    if sentence.endswith("들었다"):
-        sentence = sentence[:-3] + "들었어요."
-    elif sentence.endswith("했다"):
-        sentence = sentence[:-2] + "했어요."
-    elif sentence.endswith("어"):
-        sentence = sentence[:-1] + "어요."
-    elif sentence.endswith("다"):
-        sentence = sentence[:-1] + "어요."
-    else:
-        sentence = sentence + "."
-    return sentence
+    return transform_register(text, "smart_casual")
 
 
 def to_casual_sentence(text: str) -> str:
-    sentence = str(text or "").strip().rstrip(".!?")
-    sentence = sentence.replace("저는 ", "나는 ").replace("저 ", "나 ")
-    sentence = sentence.replace(" 들었습니다", " 들었어").replace(" 들었어요", " 들었어")
-    sentence = sentence.replace("입니다.", "이야.")
-    if sentence.endswith("들었다"):
-        sentence = sentence[:-3] + "들었어"
-    return sentence
-
+    return transform_register(text, "casual").rstrip(".")
 
 def build_fallback_feedback(user_sentence: str, target_word: str | None, dictionary_docs: list[dict], spoken_result: dict) -> dict:
     corrected = user_sentence
@@ -399,6 +508,8 @@ def sanitize_feedback_result(result: dict, user_sentence: str, target_word: str 
     result["tpo"].setdefault("reason", fallback["tpo"]["reason"])
     for key in ["공적", "사적", "반격식"]:
         result["tpo"].setdefault(key, fallback["tpo"][key])
+        if not preserves_original_context(user_sentence, str(result["tpo"].get(key, "")), target_word):
+            result["tpo"][key] = fallback["tpo"][key]
 
     if not dictionary_docs:
         result["grammar"]["reason"] = fallback["grammar"]["reason"]
