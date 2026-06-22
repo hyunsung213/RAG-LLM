@@ -11,7 +11,10 @@ import chromadb
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from embedding_utils import is_quota_error, local_embedding
+try:
+    from .embedding_utils import is_quota_error, local_embedding
+except ImportError:
+    from embedding_utils import is_quota_error, local_embedding
 
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -146,6 +149,50 @@ def get_chroma_collection():
     return settings, openai_client, gemini_client, collection
 
 
+def get_chroma_collection_for_metadata():
+    load_dotenv(ROOT_DIR / ".env")
+    persist_dir = resolve_project_path(os.getenv("CHROMA_PERSIST_DIR", "./chroma_db"))
+    collection_name = os.getenv("CHROMA_COLLECTION_NAME", "ieung_rag")
+    chroma_client = chromadb.PersistentClient(path=str(persist_dir))
+    return chroma_client.get_collection(name=collection_name)
+
+
+def docs_from_chroma_get(result: dict, distance: float = 0.0) -> list[dict]:
+    docs: list[dict] = []
+    ids = result.get("ids", []) or []
+    documents = result.get("documents", []) or []
+    metadatas = result.get("metadatas", []) or []
+
+    for doc_id, content, metadata in zip(ids, documents, metadatas):
+        metadata = metadata or {}
+        docs.append(
+            {
+                "doc_id": doc_id,
+                "distance": distance,
+                "word": metadata.get("word", ""),
+                "doc_type": metadata.get("doc_type", ""),
+                "source": metadata.get("source", ""),
+                "content": content or "",
+                "metadata": metadata,
+            }
+        )
+    return docs
+
+
+def get_documents_by_word(target_word: str) -> list[dict]:
+    collection = get_chroma_collection_for_metadata()
+    result = collection.get(
+        where={
+            "$and": [
+                {"doc_type": {"$eq": "word_definition"}},
+                {"word": {"$eq": target_word}},
+            ]
+        },
+        include=["documents", "metadatas"],
+    )
+    return docs_from_chroma_get(result)
+
+
 def search_documents(
     query: str,
     top_k: int = 5,
@@ -258,6 +305,11 @@ def take_docs(docs: list[dict], limit: int) -> list[dict]:
 def search_target_word_documents(target_word: str) -> list[dict]:
     docs: list[dict] = []
     normalized_target = normalize_match_text(target_word)
+
+    try:
+        docs.extend(get_documents_by_word(target_word))
+    except Exception:
+        pass
 
     try:
         docs.extend(

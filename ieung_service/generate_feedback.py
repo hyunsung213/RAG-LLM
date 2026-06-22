@@ -240,7 +240,9 @@ def build_dictionary_reason(summary: dict, fallback_message: str) -> str:
         parts.append(f"[한국어기초사전] {summary['한국어기초사전'][0]}")
     if summary.get("우리말샘"):
         parts.append(f"[우리말샘] {summary['우리말샘'][0]}")
-    if not parts:
+    if parts:
+        parts.append(f"[판단] {fallback_message}")
+    else:
         parts.append(f"[사전 근거 없음] {fallback_message}")
     return join_reason_parts(parts)
 
@@ -429,11 +431,34 @@ def to_smart_casual_sentence(text: str) -> str:
 def to_casual_sentence(text: str) -> str:
     return transform_register(text, "casual").rstrip(".")
 
+def detect_meaning_issue(user_sentence: str, target_word: str | None) -> dict | None:
+    if target_word != "권선징악":
+        return None
+
+    context = str(user_sentence or "").replace("권선징악", "")
+    profit_terms = ["이익", "돈", "수익", "재물", "실속"]
+    moral_terms = ["선", "악", "착한", "나쁜", "못된", "벌", "징계", "응징", "보상", "권장"]
+    has_profit_focus = any(term in context for term in profit_terms)
+    has_moral_context = any(term in context for term in moral_terms)
+
+    if has_profit_focus and not has_moral_context:
+        return {
+            "message": "'권선징악'은 이익을 추구한다는 뜻이 아니라, 착한 일을 권하고 악한 일을 벌한다는 뜻입니다.",
+            "suggestion": "착한 사람은 보상받고 악한 사람은 벌받는 것이 권선징악이다.",
+        }
+    return None
+
 def build_fallback_feedback(user_sentence: str, target_word: str | None, dictionary_docs: list[dict], spoken_result: dict) -> dict:
     corrected = user_sentence
     grammar_status = "correct"
     grammar_message = "문법적으로 큰 오류가 없습니다."
     grammar_suggestion = None
+
+    if "쫒" in corrected:
+        corrected = corrected.replace("쫒", "쫓")
+        grammar_status = "incorrect"
+        grammar_message = "'쫓다'의 활용형은 '쫓는'이 올바른 표기입니다."
+        grammar_suggestion = corrected
 
     if target_word == "정" and "카페를" in user_sentence and "정" in user_sentence:
         corrected = user_sentence.replace("카페를", "카페에")
@@ -455,12 +480,18 @@ def build_fallback_feedback(user_sentence: str, target_word: str | None, diction
 
     dictionary_summary = build_dictionary_evidence_summary(dictionary_docs)
     spoken_examples = spoken_result.get("examples", [])
-    base_sentence = corrected if corrected != user_sentence else user_sentence
+    meaning_issue = detect_meaning_issue(user_sentence, target_word)
+    meaning_correct = meaning_issue is None
+    meaning_message = (
+        meaning_issue["message"] if meaning_issue else "대상 문화어휘의 의미는 현재 문맥에서 크게 어긋나지 않습니다."
+    )
+    meaning_suggestion = meaning_issue["suggestion"] if meaning_issue else None
+    base_sentence = meaning_suggestion or (corrected if corrected != user_sentence else user_sentence)
     smart_casual = to_smart_casual_sentence(base_sentence)
     formal = to_formal_sentence(base_sentence)
     casual = to_casual_sentence(base_sentence)
     grammar_reason = build_dictionary_reason(dictionary_summary, grammar_message)
-    meaning_reason = build_dictionary_reason(dictionary_summary, "대상 문화어휘의 의미는 현재 문맥에서 크게 어긋나지 않습니다.")
+    meaning_reason = build_dictionary_reason(dictionary_summary, meaning_message)
     tpo_reason = build_spoken_reason(spoken_examples)
 
     return {
@@ -472,9 +503,9 @@ def build_fallback_feedback(user_sentence: str, target_word: str | None, diction
             "suggestion": grammar_suggestion,
         },
         "meaning": {
-            "correct": True,
+            "correct": meaning_correct,
             "reason": meaning_reason,
-            "suggestion": None,
+            "suggestion": meaning_suggestion,
         },
         "tpo": {
             "best_fit": "반격식",
@@ -504,6 +535,10 @@ def sanitize_feedback_result(result: dict, user_sentence: str, target_word: str 
     result["meaning"].setdefault("correct", fallback["meaning"]["correct"])
     result["meaning"].setdefault("reason", fallback["meaning"]["reason"])
     result["meaning"].setdefault("suggestion", fallback["meaning"]["suggestion"])
+    if fallback["grammar"]["correct"] is False:
+        result["grammar"] = fallback["grammar"]
+    if fallback["meaning"]["correct"] is False:
+        result["meaning"] = fallback["meaning"]
     result["tpo"].setdefault("best_fit", fallback["tpo"]["best_fit"])
     result["tpo"].setdefault("reason", fallback["tpo"]["reason"])
     for key in ["공적", "사적", "반격식"]:
